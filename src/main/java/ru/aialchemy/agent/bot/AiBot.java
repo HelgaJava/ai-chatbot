@@ -14,7 +14,6 @@ import ru.aialchemy.agent.bot.command.base.BotCommand;
 import ru.aialchemy.agent.bot.command.impl.AboutCommand;
 import ru.aialchemy.agent.bot.command.impl.HelpCommand;
 import ru.aialchemy.agent.bot.command.impl.StartCommand;
-import ru.aialchemy.agent.dto.FileUploadRequest;
 import ru.aialchemy.agent.service.FileUploadService;
 
 import java.io.InputStream;
@@ -185,34 +184,24 @@ public class AiBot extends TelegramLongPollingBot {
                 return;
             }
 
-            // Подготавливаем запрос для отправки
-            var uploadRequest = FileUploadRequest.builder()
-                    .fileName(telegramFile.getFilePath())
-                    .originalFileName(getOriginalFileName(message))
-                    .fileContent(fileContent)
-                    .mimeType(getMimeType(message))
-                    .message(caption != null ? caption : "Файл без описания")
-                    .chatId(chatId.toString())
-                    .username(userName)
-                    .fileSize(telegramFile.getFileSize())
-                    .build();
+            // Отправляем уведомление о начале обработки
+            sendProcessingMessage(chatId, getOriginalFileName(message));
 
-            // Отправляем файл через HTTP
-            boolean uploadSuccess = fileUploadService.uploadFile(uploadRequest);
-
-            if (uploadSuccess) {
-                sendSuccessMessage(chatId,
-                        "✅ Файл успешно отправлен!\n\n" +
-                                "📝 Сообщение: " + (caption != null ? caption : "без описания") + "\n" +
-                                "📎 Файл: " + getOriginalFileName(message)
-                );
-            } else {
-                sendErrorMessage(chatId, "❌ Не удалось отправить файл во внешнюю систему");
-            }
+            // Отправляем файл через HTTP как multipart/form-data
+            var serviceResponse = fileUploadService.uploadFile(
+                    getOriginalFileName(message),
+                    fileContent,
+                    getMimeType(message),
+                    caption != null ? caption : "Файл без описания",
+                    chatId.toString(),
+                    userName
+            );
+            // Отправляем ответ от сервиса пользователю
+            sendServiceResponse(chatId, getOriginalFileName(message), serviceResponse);
 
         } catch (Exception e) {
             log.error("Error processing file: {}", e.getMessage());
-            sendErrorMessage(chatId, "❌ Ошибка при обработке файла");
+            sendErrorMessage(chatId, "❌ Ошибка при обработке файла: " + e.getMessage());
         }
     }
 
@@ -269,15 +258,34 @@ public class AiBot extends TelegramLongPollingBot {
     }
 
 
-    private void sendSuccessMessage(Long chatId, String text) throws TelegramApiException {
+    private void sendProcessingMessage(Long chatId, String fileName) throws TelegramApiException {
         var message = SendMessage.builder()
                 .chatId(chatId.toString())
-                .text(text)
+                .text("🔄 Обрабатываю файл: " + fileName + "\n\n⏳ Пожалуйста, подождите...")
+                .build();
+
+        execute(message);
+        log.info("Sent processing message to chat: {}", chatId);
+    }
+
+    private void sendServiceResponse(Long chatId, String fileName, String serviceResponse) throws TelegramApiException {
+        var responseText = """
+        ✅ Обработка завершена!
+        
+        📎 Файл: %s
+        
+        📋 Ответ сервиса:
+        %s
+        """.formatted(fileName, serviceResponse);
+
+        var message = SendMessage.builder()
+                .chatId(chatId.toString())
+                .text(responseText)
                 .replyMarkup(createInlineKeyboard())
                 .build();
 
         execute(message);
-        log.info("Sent file success message to chat: {}", chatId);
+        log.info("Sent service response to chat: {}", chatId);
     }
 
     private void sendErrorMessage(Long chatId, String text) throws TelegramApiException {
