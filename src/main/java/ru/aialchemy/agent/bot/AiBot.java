@@ -114,7 +114,7 @@ public class AiBot extends TelegramLongPollingBot {
 
     private boolean sendEchoMessage(Long chatId, String messageText) {
         var responseText = """
-                🔄 Эхо:
+                🔄 Получено сообщение:
                 %s
                             
                 Используй кнопки ниже для других действий.
@@ -135,7 +135,7 @@ public class AiBot extends TelegramLongPollingBot {
                 .callbackData("about")
                 .build();
 
-        var row = List.of(helpButton, aboutButton);
+        var row = List.of(aboutButton, helpButton);
 
         var keyboard = InlineKeyboardMarkup.builder()
                 .keyboardRow(row)

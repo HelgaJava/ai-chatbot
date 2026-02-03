@@ -20,13 +20,13 @@ public class AboutCommand extends AbstractBotCommand {
         var aboutText = """
             ℹ️ Обо мне:
             
-            Я простой эхо-бот, созданный на Java с использованием:
+            Я AI-агент, созданный для проведения аналитики и редактирования отчетов в формате Word.
+            Технологии создания:
             • Spring Boot
             • Telegram Bot API
             • Java 17
-            • Lombok
             
-            Мой код открыт и доступен для изучения!
+            Для получения инструкций по использованию воспользуйтесь кнопкой Help.
             """;
 
         var keyboard = createInlineKeyboard();
