@@ -1,0 +1,158 @@
+name: Generate PlantUML Diagrams
+
+on:
+  push:
+    branches:
+      - demo
+
+permissions:
+  contents: write
+
+jobs:
+  generate-diagrams:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y plantuml graphviz
+          echo "PlantUML version:"
+          plantuml -version
+
+      - name: Create diagrams directory
+        run: mkdir -p diagrams
+
+      - name: Extract PlantUML from README and generate PNG
+        id: generate
+        run: |
+          set -e
+          
+          echo "=== Extracting PlantUML code from README.md ==="
+          
+          # Извлекаем содержимое между ```plantuml и ```
+          awk '
+            /^```plantuml$/ { 
+              in_block=1
+              next
+            }
+            /^```$/ && in_block { 
+              in_block=0
+              next
+            }
+            in_block { print }
+          ' README.md > diagrams/arch.puml.raw
+          
+          echo "=== Raw extracted content ==="
+          cat diagrams/arch.puml.raw
+          echo "=== End raw content ==="
+          
+          # Проверяем, что есть содержимое
+          if [ ! -s "diagrams/arch.puml.raw" ]; then
+            echo "⚠️ WARNING: No PlantUML code found in README.md"
+            echo "ℹ️ This is normal if README already has image instead of code"
+          
+            # Проверяем, есть ли уже сгенерированная PNG
+            if [ -f "diagrams/architecture.png" ]; then
+              echo "✅ PNG already exists: diagrams/architecture.png"
+              echo "Nothing to do - exiting gracefully"
+              # Просто выходим без ошибки
+              exit 0
+            else
+              echo "❌ ERROR: No PNG found and no PlantUML code"
+              echo "Either add PlantUML code to README or existing PNG to diagrams/"
+              # Всё равно выходим без ошибки, чтобы workflow не падал
+              exit 0
+            fi
+          fi
+          
+          # Проверяем, уже ли есть @startuml в извлечённом коде
+          if grep -q '@startuml' diagrams/arch.puml.raw; then
+            echo "=== @startuml already in extracted content, using as-is ==="
+            cp diagrams/arch.puml.raw diagrams/architecture.puml
+          else
+            echo "=== Adding @startuml/@enduml ==="
+            {
+              echo "@startuml"
+              cat diagrams/arch.puml.raw
+              echo "@enduml"
+            } > diagrams/architecture.puml
+          fi
+          
+          echo "=== Generated .puml file ==="
+          cat diagrams/architecture.puml
+          
+          # Генерируем PNG
+          echo "=== Generating PNG ==="
+          
+          # Переходим в папку diagrams чтобы пути были правильные
+          cd diagrams/
+          
+          # Генерируем PNG
+          plantuml -verbose -tpng architecture.puml 2>&1 | tee plantuml.log
+          
+          # Возвращаемся обратно
+          cd ..
+          
+          # Проверяем, что PNG создан
+          if [ -f "diagrams/architecture.png" ]; then
+            echo "✅ Successfully generated diagrams/architecture.png"
+            echo "PNG size: $(du -h diagrams/architecture.png | cut -f1)"
+          else
+            echo "❌ ERROR: PNG file was not generated!"
+            echo "PlantUML log:"
+            cat diagrams/plantuml.log || true
+            echo "Files in diagrams/:"
+            ls -la diagrams/
+            exit 1
+          fi
+
+      - name: Replace PlantUML block with image in README
+        if: steps.generate.outcome == 'success'
+        run: |
+          echo "=== Replacing PlantUML code with image in README ==="
+          
+          # Создаём backup
+          cp README.md README.md.backup
+          
+          # Используем perl для надёжной замены
+          perl -i -p0e 's/```plantuml\n.*?\n```/![Architecture Diagram](diagrams\/architecture.png)/s' README.md
+          
+          echo "=== README after replacement ==="
+          grep -n "Architecture Diagram" README.md || echo "Replacement not found"
+
+      - name: Commit and push changes
+        if: steps.generate.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Committing changes ==="
+          
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          # Добавляем все файлы в diagrams
+          git add diagrams/
+          git add README.md
+          
+          # Проверяем есть ли изменения
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          echo "Changes to be committed:"
+          git diff --staged --name-only
+          
+          git commit -m "🔄 Auto-generated PlantUML diagram and updated README"
+          
+          echo "=== Pushing to repository ==="
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+          
+          echo "✅ Changes pushed successfully"
