@@ -1,0 +1,21 @@
+(0.000 - 254 Mo) 247 Mo - PlantUML Version 1.2020.02
+(0.017 - 254 Mo) 247 Mo - GraphicsEnvironment.isHeadless() true
+(0.017 - 254 Mo) 247 Mo - Forcing -Djava.awt.headless=true
+(0.017 - 254 Mo) 247 Mo - java.awt.headless set as true
+(0.017 - 254 Mo) 247 Mo - Forcing resource load on OpenJdk
+(0.738 - 254 Mo) 245 Mo - Found 1 files
+(0.739 - 254 Mo) 245 Mo - Working on /home/runner/work/ai-chatbot/ai-chatbot/diagrams/architecture.puml
+(0.741 - 254 Mo) 245 Mo - Setting current dir: .
+(0.741 - 254 Mo) 245 Mo - Setting current dir: /home/runner/work/ai-chatbot/ai-chatbot/diagrams
+(0.741 - 254 Mo) 245 Mo - Using default charset
+(0.770 - 254 Mo) 245 Mo - Reading from architecture.puml
+(0.809 - 254 Mo) 243 Mo - Reading file: architecture.puml
+(0.946 - 254 Mo) 246 Mo - Compilation duration 136
+(0.947 - 254 Mo) 246 Mo - Regex total/invoked/compiled 66/35/24
+(0.947 - 254 Mo) 246 Mo - Matches created 85
+(1.132 - 254 Mo) 244 Mo - Creating file: /home/runner/work/ai-chatbot/ai-chatbot/diagrams/architecture.png
+(1.177 - 254 Mo) 235 Mo - Creating image 1414x385
+(1.386 - 254 Mo) 228 Mo - Ok for com.sun.imageio.plugins.png.PNGMetadata
+(1.387 - 254 Mo) 228 Mo - Cannot create com.sun.imageio.plugins.png.PNGMetadata
+(1.674 - 254 Mo) 224 Mo - File size : 31755
+(1.675 - 254 Mo) 224 Mo - Number of image(s): 1

@@ -45,25 +45,7 @@ flowchart LR
     style Service fill:#fff3e0
     style DocService fill:#e8f5e8
 ```
-```plantuml
-@startuml
-participant "User Telegram" as User
-participant "AiBot" as Bot
-participant "FileUploadService" as UploadService
-participant "ai-agent-doc-edit" as DocService
-participant "File System" as FileSystem
-
-User -> Bot : Отправляет документ + текст запроса
-Bot -> Bot : Парсинг документа и метаданных
-Bot -> UploadService : Передача файла + caption (запрос для AI-агента)
-UploadService -> DocService : Multipart запрос (файл + JSON)
-DocService -> DocService : Анализ и редактирование документа
-DocService -> FileSystem : Сохранение результата
-DocService -> UploadService : Ответ с результатом
-UploadService -> Bot : Результат обработки
-Bot -> User : Уведомление о завершении + путь к исправленному файлу
-@enduml
-```
+![Architecture Diagram](diagrams/architecture.png)
 
 ## 4. Техническая реализация (коротко)
 - Формат входа: Telegram сообщение с документом и текстовой инструкцией пользователя.  
