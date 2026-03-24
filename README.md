@@ -37,8 +37,8 @@ flowchart LR
     User[User Telegram] --> Bot[AiBot]
     Bot --> Service[FileUploadService]
     Service -->|HTTP POST| DocService[ai-agent-doc-edit]
-    DocService -->|Результат| Bot
-    Bot -->|Уведомление| User
+    DocService -->|Result| Bot
+    Bot -->|Notification| User
 
     style User fill:#e1f5fe
     style Bot fill:#f3e5f5
